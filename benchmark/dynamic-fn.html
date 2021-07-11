@@ -1,0 +1,91 @@
+<html lang="en">
+<head>
+    <title>Benchmarks</title>
+</head>
+<body>
+<div id="first"></div>
+<div id="second"></div>
+<script src="./lodash.js"></script>
+<script src="./benchmark.js"></script>
+<script type="text/javascript">
+
+
+    new Benchmark.Suite()
+
+        // .add("plain", function () {
+        //
+        //     const update = new Array(50);
+        //     const create = new Array(50);
+        //     const remove = new Array(50);
+        //
+        //     update.fill(1);
+        //     create.fill(2);
+        //     remove.fill(3);
+        //
+        //     const fn = (n, update, create, remove) => {
+        //         for (let i = 0; i < update.length; i++) {
+        //             if (update[i] > n) update[i]++;
+        //         }
+        //         for (let i = 0; i < create.length; i++) {
+        //             if (create[i] > n) create[i]++;
+        //         }
+        //         for (let i = 0; i < remove.length; i++) {
+        //             if (remove[i] > n) remove[i]++;
+        //         }
+        //     }
+        //
+        //     fn(0, update, create, remove);
+        //     fn(1, update, create, remove);
+        //     fn(2, update, create, remove);
+        // })
+        // .add("compiled", function () {
+        //
+        //
+        //     const update = new Array(50);
+        //     const create = new Array(50);
+        //     const remove = new Array(50);
+        //
+        //     update.fill(1);
+        //     create.fill(2);
+        //     remove.fill(3);
+        //
+        //     let code = "";
+        //     for (let i = 0; i < update.length; i++) {
+        //         code += `\nupdate[${i}]++`;
+        //     }
+        //     for (let i = 0; i < create.length; i++) {
+        //         code += `\ncreate[${i}]++`;
+        //     }
+        //     for (let i = 0; i < remove.length; i++) {
+        //         code += `\nremove[${i}]++`;
+        //     }
+        //
+        //     const fn = new Function("update", "create", "remove", code);
+        //
+        //     fn(update, create, remove);
+        //     fn(update, create, remove);
+        //     fn(update, create, remove);
+        // })
+        .add("acc", function () {
+            (function (v) {
+                return v.a + v.b + v.c;
+            })({a: 1, b: 2, c: 3});
+        })
+        .add("destr", function () {
+            (function ({a, b, c}) {
+                return a + b + c;
+            })({a: 1, b: 2, c: 3});
+        })
+        .on("start", function (event) {
+            console.log("Benchmark started...");
+        })
+        .on("cycle", function (event) {
+            console.log(String(event.target));
+        })
+        .on("complete", function () {
+            console.log("Fastest is " + this.filter("fastest").map("name"));
+        })
+        .run({"async": true});
+</script>
+</body>
+</html>

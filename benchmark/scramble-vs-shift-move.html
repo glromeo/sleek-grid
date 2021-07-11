@@ -1,0 +1,258 @@
+<html lang="en">
+<head>
+    <title>Benchmarks</title>
+    <style type="text/css">
+        body {
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            justify-items: stretch;
+        }
+
+        .window {
+            overflow: auto;
+            flex: 1 1 0;
+            min-width: 0;
+        }
+
+        .grid {
+            position: relative;
+            width: 2500px;
+            height: 4000px;
+        }
+
+        .row {
+            position: absolute;
+            width: 100%;
+            height: 40px;
+        }
+
+        .row.shift {
+            background-color: cornflowerblue;
+        }
+
+        .row.scramble {
+            background-color: green;
+        }
+
+        .cell {
+            position: absolute;
+            color: white;
+            width: 100px;
+            height: 100%;
+            padding: 8px;
+        }
+
+        .cell.scramble {
+            border: 2px solid orange;
+        }
+
+        .cell.shift {
+            border: 2px solid chocolate;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="window">
+        <div id="shift" class="grid"></div>
+    </div>
+    <div class="window">
+        <div id="scramble" class="grid"></div>
+    </div>
+</div>
+<script src="./lodash.js"></script>
+<script src="./benchmark.js"></script>
+<script type="text/javascript">
+
+    let number = 10000;
+
+    {
+        const id = "shift";
+        const grid = document.getElementById(id);
+        for (let r = 0; r < 50; r++) {
+            let rowNode = grid.appendChild(document.createElement("div"));
+            rowNode.id = `${id}-${r}`;
+            rowNode.index = r;
+            rowNode.className = `${id} row`;
+            // rowNode.style.transform = `translateY(${r * 40}px)`;
+            rowNode.style.top = `${r * 40}px`;
+            for (let c = 0; c < 25; c++) {
+                let cellNode = rowNode.appendChild(document.createElement("div"));
+                cellNode.className = `${id} cell`;
+                cellNode.innerText = `${r}:${c}`;
+                cellNode.style.left = `${c * 100}px`;
+            }
+        }
+    }
+
+    {
+        const id = "scramble";
+        const grid = document.getElementById(id);
+        for (let r = 0; r < 50; r++) {
+            let rowNode = grid.appendChild(document.createElement("div"));
+            rowNode.id = `${id}-${r}`;
+            rowNode.index = r;
+            rowNode.className = `${id} row`;
+            rowNode.style.transform = `translateY(${r * 40}px)`;
+            for (let c = 0; c < 25; c++) {
+                let cellNode = rowNode.appendChild(document.createElement("div"));
+                cellNode.className = `${id} cell`;
+                cellNode.innerText = `${r}:${c}`;
+                cellNode.style.left = `${c * 100}px`;
+            }
+        }
+    }
+
+    let count = 0, dir = 1;
+
+    function shift() {
+
+        const grid = document.getElementById("shift");
+        if (dir === 1) {
+            let recycle = [], next = grid.firstChild;
+            for (let i = 0; i < 5; i++) {
+                recycle.push(next);
+                next = next.nextSibling;
+            }
+            let index = grid.lastChild.index;
+            for (let i = 0; i < 5; i++) {
+                let rowNode = recycle[i];
+                const r = ++index;
+                rowNode.id = `shift-${r}`;
+                rowNode.index = r;
+                rowNode.className = `shift row`;
+                rowNode.style.top = `${r * 40}px`;
+                // rowNode.style.transform = `translateY(${r * 40}px)`;
+                grid.appendChild(rowNode);
+            }
+        } else {
+            let recycle = [], next = grid.lastChild;
+            for (let i = 0; i < 5; i++) {
+                recycle.push(next);
+                next = next.previousSibling;
+            }
+            let index = grid.firstChild.index;
+            for (let i = 0; i < 5; i++) {
+                let rowNode = recycle[i];
+                const r = --index;
+                rowNode.id = `shift-${r}`;
+                rowNode.index = r;
+                rowNode.className = `shift row`;
+                // rowNode.style.transform = `translateY(${r * 40}px)`;
+                rowNode.style.top = `${r * 40}px`;
+                grid.insertBefore(rowNode, grid.firstChild);
+            }
+        }
+
+        let index = Math.random() * 50;
+
+        count += dir;
+        if (count === 0) {
+            dir = 1;
+        }
+        if (count === 9) {
+            dir = -1;
+        }
+    }
+
+    const indices = [];
+    for (let i = 0; i < 50; i++) {
+        indices.push(i);
+    }
+
+    function scramble() {
+
+        const grid = document.getElementById("scramble");
+
+        let index = Math.random() * 50;
+
+        let act = [];
+
+        let childNodes = grid.childNodes;
+        for (let i = 0; i < 50; i++) {
+            let index = childNodes[i].index;
+            let j = indices[i];
+            if (i < 5) {
+                act.push(j);
+            }
+            if (j < index) {
+                indices[i] = index;
+            }
+            indices[i] = index;
+        }
+
+        for (let i = 0; i < 5; i++) {
+            let rowNode = childNodes[(count * 5) + i];
+            const r = ++index;
+            rowNode.id = `scramble-${r}`;
+            rowNode.index = r;
+            rowNode.className = `scramble row`;
+            rowNode.style.transform = `translateY(${r * 40}px)`;
+        }
+
+        count += dir;
+        if (count === 0) {
+            dir = 1;
+        }
+        if (count === 9) {
+            dir = -1;
+        }
+    }
+
+    window.scramble = scramble;
+
+    const cycles = [];
+
+    new Benchmark.Suite()
+
+        .add("shift", shift)
+        .add("scramble", scramble)
+        //
+        // .add("second", function () {
+        //     // document.getElementById("second").classList.replace(`f-${s}`, `f-${++s}`);
+        //
+        //     // let el = document.getElementById("second");
+        //     // el.style.cssText = `left:${++s}px;width:${s}px`;
+        //
+        //     // let el = document.getElementById("second");
+        //     // el.innerHTML = null;  // 96,620 if optimized still << 172,641 -> dom js wins!!!
+        //     // el.insertAdjacentHTML("afterbegin", `<div id="${++s}" class="a b c-${s}">${s}</div>`);
+        // })
+
+        .on("start", function (event) {
+            // console.log("Benchmark started...");
+            document.body.style.background = "red";
+        })
+        .on("cycle", function (event) {
+            count = 0;
+            dir = 1;
+            cycles.push(String(event.target));
+        })
+        .on("complete", function () {
+            document.body.style.background = "green";
+            alert(`\
+${cycles[0]}
+
+${cycles[1]}
+
+Fastest is ${this.filter("fastest").map("name")}
+`);
+        })
+        .run({"async": true});
+</script>
+</body>
+</html>

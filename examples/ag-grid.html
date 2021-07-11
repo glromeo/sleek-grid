@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>AgGrid Comparison</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style type="text/css">
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            font-size: 13px;
+            font-family: sans-serif;
+            background-color: cornflowerblue;
+        }
+
+        #ag-grid {
+            height: 100%;
+        }
+
+        .ag-theme-alpine .ag-cell, .ag-theme-alpine .ag-full-width-row .ag-cell-wrapper.ag-row-group {
+            line-height: 30px !important;
+        }
+    </style>
+    <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-grid.css">
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-alpine.css">
+</head>
+<body style="padding: 24px;">
+<div id="ag-grid" class="ag-theme-alpine"></div>
+<script type="module" src="../lib/index.mjs"></script>
+<script type="module">
+
+    fetch("./mock-data.json").then(async function (result) {
+
+        const data = await result.json();
+
+        // name -> object field
+        // number -> index in array row
+
+        const columns = [
+            {headerName: "Id", field: "id"},
+            {headerName: "First_name", field: "first_name"},
+            {headerName: "Last_name", field: "last_name"},
+            {headerName: "Email", field: "email"},
+            {headerName: "Gender", field: "gender"},
+            {headerName: "Ip_address", field: "ip_address"},
+            {headerName: "Buzzword", field: "buzzword"},
+            {headerName: "Pet", field: "pet"},
+            {headerName: "City", field: "city"},
+            {headerName: "Car_make", field: "car_make"},
+            {headerName: "Car_vin", field: "car_vin"},
+            {headerName: "Color", field: "color"},
+            {headerName: "Product", field: "product"},
+            {headerName: "Company", field: "company"},
+            {headerName: "Wealth", field: "wealth"},
+            {headerName: "Race", field: "race"},
+            {headerName: "Plant", field: "plant"},
+            {headerName: "Postcode", field: "postcode"},
+            {headerName: "Phone_number", field: "phone_number"},
+            {headerName: "Address", field: "address"},
+            {headerName: "Iban", field: "iban"}
+        ];
+
+        let rows = data;
+        for (let i = 0; i < 0; i++) {
+            rows = [...rows.map(r => ({...r})), ...rows.map(r => ({...r}))];
+        }
+
+        const gridDiv = document.querySelector("#ag-grid");
+        let gridOptions = {
+            columnDefs: columns.slice(0, columns.length),
+            rowData: rows,
+            rowHeight: 32
+        };
+
+        new agGrid.Grid(gridDiv, gridOptions);
+
+        await new Promise(function (resolve) {
+            setTimeout(resolve, 250);
+        });
+
+        const grid = window.grid = document.querySelector(".ag-center-cols-viewport");
+
+        const api = gridOptions.api;
+
+
+        let searchParams = new URLSearchParams(window.location.search.slice(1));
+        if (searchParams.has("demo")) {
+            switch (searchParams.get("demo")) {
+                case "r": {
+                    let top = 500, count = 0;
+                    console.time("raf");
+                    requestAnimationFrame(function redraw() {
+                        ++count;
+                        api.ensureIndexVisible((top += 50) % 1000)
+                        if (top <= 3000) {
+                            requestAnimationFrame(redraw);
+                        } else {
+                            console.timeEnd("raf");
+                            console.log("count:", count);
+                        }
+                    });
+                    break;
+                }
+                case "i":
+                    requestAnimationFrame(() => {
+                        let top = 500, count = 0;
+                        console.time("int");
+                        let interval = setInterval(function () {
+                            ++count;
+                            grid.scrollTo(0, (top += 500) % 31000);
+                            if (top > 62000) {
+                                clearInterval(interval);
+                                console.timeEnd("int");
+                                console.log("count:", count);
+                            }
+                        }, 1000 / 60);
+                    });
+                    break;
+                case "i2":
+                    requestAnimationFrame(() => {
+                        let top = 1500, count = 0;
+                        console.time("int");
+                        let interval = setInterval(function () {
+                            ++count;
+                            grid.scrollTo(0, (top += 1500) % 31000);
+                            if (top > 62000) {
+                                clearInterval(interval);
+                                console.timeEnd("int");
+                                console.log("count:", count);
+                            }
+                        }, 1000 / 60);
+                    });
+                    break;
+                case "sr": {
+                    let top = 10, count = 0;
+                    console.time("sr");
+                    requestAnimationFrame(function redraw() {
+                        ++count;
+                        grid.scrollTo(0, top += 10);
+                        if (top <= 1500) {
+                            requestAnimationFrame(redraw);
+                        } else {
+                            console.timeEnd("sr");
+                            console.log("count:", count);
+                        }
+                    });
+                    break;
+                }
+                case "s":
+                    requestAnimationFrame(() => {
+                        let top = 10, count = 0;
+                        console.time("small");
+                        let interval = setInterval(function () {
+                            ++count;
+                            grid.scrollTo(0, top += 10);
+                            if (top > 2000) {
+                                clearInterval(interval);
+                                console.timeEnd("small");
+                                console.log("count:", count);
+                            }
+                        }, 1000 / 60);
+                    });
+                    break;
+                default:
+                    alert("unknown demo: " + searchParams.get("demo"));
+            }
+        }
+
+    });
+
+</script>
+</body>
+</html>

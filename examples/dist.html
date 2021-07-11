@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Virtualized Grid</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style type="text/css">
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            font-size: 13px;
+            font-family: sans-serif;
+            background-color: cornflowerblue;
+        }
+    </style>
+    <script type="module" src="./construct-style-sheets-polyfill.js"></script>
+</head>
+<body style="padding: 24px;">
+<sleek-grid></sleek-grid>
+<script type="module" src="../dist/sleek-grid.js"></script>
+<script type="module">
+
+    window.grid = document.querySelector("sleek-grid");
+
+    fetch("./mock-data.json").then(async function (result) {
+
+        const data = await result.json();
+
+        // name -> object field
+        // number -> index in array row
+
+        const columns = [
+            {label:"Id", field: "id", width: 150},
+            {label:"First_name", field: "first_name", width: 150},
+            {label:"Last_name", field: "last_name", width: 150},
+            {label:"Email", field: "email", width: 150},
+            {label:"Gender", field: "gender", width: 150},
+            {label:"Ip_address", field: "ip_address", width: 150},
+            {label:"Buzzword", field: "buzzword", width: 150},
+            {label:"Pet", field: "pet", width: 150},
+            {label:"City", field: "city", width: 150},
+            {label:"Car_make", field: "car_make", width: 150},
+            {label:"Car_vin", field: "car_vin", width: 150},
+            {label:"Color", field: "color", width: 150},
+            {label:"Product", field: "product", width: 150},
+            {label:"Company", field: "company", width: 150},
+            {label:"Wealth", field: "wealth", width: 150},
+            {label:"Race", field: "race", width: 150},
+            {label:"Plant", field: "plant", width: 150},
+            {label:"Postcode", field: "postcode", width: 150},
+            {label:"Phone_number", field: "phone_number", width: 150},
+            {label:"Address", field: "address", width: 150},
+            {label:"Iban", field: "iban", width: 150},
+        ];
+
+        data.forEach((row, index) => {
+            row.label = index;
+            row.height = 32;
+        });
+
+        grid.rowHeight = index => 32;
+
+        grid.renderCell = function (column, row) {
+            return `<span class="text">${row[column.field]}</span>`
+        }
+
+        grid.data = {columns: columns.slice(0, columns.length), rows: data};
+
+        let searchParams = new URLSearchParams(window.location.search.slice(1));
+        if (searchParams.has("demo")) {
+            switch (searchParams.get("demo")) {
+                case "r": {
+                    let top = 500, count = 0;
+                    console.time("raf");
+                    requestAnimationFrame(function redraw() {
+                        ++count;
+                        grid.scrollTo(0, (top += 500) % 31000);
+                        if (top <= 62000) {
+                            requestAnimationFrame(redraw);
+                        } else {
+                            console.timeEnd("raf");
+                            console.log("count:", count);
+                        }
+                    });
+                    break;
+                }
+                case "i":
+                    requestAnimationFrame(() => {
+                        let top = 500, count = 0;
+                        console.time("int");
+                        let interval = setInterval(function() {
+                            ++count;
+                            grid.scrollTo(0, (top += 500) % 31000);
+                            if (top > 62000) {
+                                clearInterval(interval);
+                                console.timeEnd("int");
+                                console.log("count:", count);
+                            }
+                        }, 1000 / 60);
+                    });
+                    break;
+                case "i2":
+                    requestAnimationFrame(() => {
+                        let top = 1500, count = 0;
+                        console.time("int");
+                        let interval = setInterval(function() {
+                            ++count;
+                            grid.scrollTo(0, (top += 1500) % 31000);
+                            if (top > 62000) {
+                                clearInterval(interval);
+                                console.timeEnd("int");
+                                console.log("count:", count);
+                            }
+                        }, 1000 / 60);
+                    });
+                    break;
+                case "sr": {
+                    let top = 10, count = 0;
+                    console.time("sr");
+                    requestAnimationFrame(function redraw() {
+                        ++count;
+                        grid.scrollTo(0, top += 10);
+                        if (top <= 1500) {
+                            requestAnimationFrame(redraw);
+                        } else {
+                            console.timeEnd("sr");
+                            console.log("count:", count);
+                        }
+                    });
+                    break;
+                }
+                case "s":
+                    requestAnimationFrame(() => {
+                        let top = 10, count = 0;
+                        console.time("small");
+                        let interval = setInterval(function() {
+                            ++count;
+                            grid.scrollTo(0, top += 10);
+                            if (top > 2000) {
+                                clearInterval(interval);
+                                console.timeEnd("small");
+                                console.log("count:", count);
+                            }
+                        }, 1000 / 60);
+                    });
+                    break;
+                default:
+                    alert("unknown demo: " + searchParams.get("demo"));
+            }
+        }
+
+    });
+
+</script>
+</body>
+</html>

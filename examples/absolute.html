@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Sleek Grid 😎</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style type="text/css">
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            font-size: 13px;
+            font-family: sans-serif;
+            background-color: cornflowerblue;
+        }
+
+        .cell {
+            box-sizing: border-box;
+            position: absolute;
+            border: 1px solid white;
+            width: 100px;
+            height: 50px;
+            padding: 15px 40px;
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr 1fr;
+        }
+
+        .section {
+            position: relative;
+        }
+
+        #grid > * {
+            overflow: scroll;
+        }
+
+        #nw .cell {
+            background-color: #8f8;
+        }
+
+        #nc .cell {
+            background-color: #f88;
+        }
+
+        #ne .cell {
+            background-color: #88f;
+        }
+
+        #cw .cell {
+            background-color: #ff8;
+        }
+
+        #cc .cell {
+            background-color: #f8f;
+        }
+
+        #ce .cell {
+            background-color: #8ff;
+        }
+
+        #sw .cell {
+            background-color: #48f;
+        }
+
+        #sc .cell {
+            background-color: #888;
+        }
+
+        #se .cell {
+            background-color: #f84;
+        }
+
+    </style>
+</head>
+<body style="padding: 24px;">
+<div id="grid" style="width: 100%; height: 100%">
+    <div id="nw" class="section"></div>
+    <div id="nc" class="section"></div>
+    <div id="ne" class="section"></div>
+    <div id="cw" class="section"></div>
+    <div id="cc" class="section"></div>
+    <div id="ce" class="section"></div>
+    <div id="sw" class="section"></div>
+    <div id="sc" class="section"></div>
+    <div id="se" class="section"></div>
+</div>
+<script type="module">
+    let style = document.head.appendChild(document.createElement("style"));
+    style.setAttribute("type", "text/css");
+    let css = "";
+    [...document.querySelectorAll(".section")].forEach(function (section) {
+        for (let r = 0; r < 25; r++) {
+            for (let c = 0; c < 25; c++) {
+                let cell = section.appendChild(document.createElement("div"));
+                cell.className = `cell c-${c} r-${r}`;
+                cell.innerText = `${c}:${r}`;
+            }
+        }
+        let top = 0;
+        for (let r = 0; r < 25; r++) {
+            let left = 0;
+            for (let c = 0; c < 25; c++) {
+                css += `.c-${c}.r-${r} { left:${left}px; top:${top}px; }`;
+                left += 100;
+            }
+            top += 50;
+        }
+    });
+    style.innerText = css;
+
+    const section = {
+        "n": {
+            "w": document.getElementById("nw"),
+            "c": document.getElementById("nc"),
+            "e": document.getElementById("ne")
+        },
+        "c": {
+            "w": document.getElementById("cw"),
+            "c": document.getElementById("cc"),
+            "e": document.getElementById("ce")
+        },
+        "s": {
+            "w": document.getElementById("sw"),
+            "c": document.getElementById("sc"),
+            "e": document.getElementById("se")
+        }
+    };
+
+    section.n.w.addEventListener("wheel", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        section.n.w.scrollLeft += event.deltaX;
+        section.c.w.scrollLeft += event.deltaX;
+        section.s.w.scrollLeft += event.deltaX;
+        section.n.w.scrollTop += event.deltaY;
+        section.n.c.scrollTop += event.deltaY;
+        section.n.e.scrollTop += event.deltaY;
+    }, {capture:true});
+    section.n.w.addEventListener("scroll", function (event) {
+        if (section.n.w.flagged) {
+            section.n.w.flagged = false;
+            return;
+        }
+        section.c.w.flagged = true; section.c.w.scrollLeft = section.n.w.scrollLeft;
+        section.s.w.flagged = true; section.s.w.scrollLeft = section.n.w.scrollLeft;
+        section.n.c.flagged = true; section.n.c.scrollTop = section.n.w.scrollTop;
+        section.n.e.flagged = true; section.n.e.scrollTop = section.n.w.scrollTop;
+    }, {capture:true});
+
+    section.n.c.addEventListener("wheel", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        section.n.c.scrollLeft += event.deltaX;
+        section.c.c.scrollLeft += event.deltaX;
+        section.s.c.scrollLeft += event.deltaX;
+        section.n.w.scrollTop += event.deltaY;
+        section.n.c.scrollTop += event.deltaY;
+        section.n.e.scrollTop += event.deltaY;
+    }, {capture:true});
+    section.n.c.addEventListener("scroll", function (event) {
+        if (section.n.c.flagged) {
+            section.n.c.flagged = false;
+            return;
+        }
+        section.c.c.flagged = true; section.c.c.scrollLeft = section.n.c.scrollLeft;
+        section.s.c.flagged = true; section.s.c.scrollLeft = section.n.c.scrollLeft;
+        section.n.w.flagged = true; section.n.w.scrollTop = section.n.c.scrollTop;
+        section.n.e.flagged = true; section.n.e.scrollTop = section.n.c.scrollTop;
+    }, {capture:true});
+
+    section.n.e.addEventListener("wheel", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        section.n.e.scrollLeft += event.deltaX;
+        section.c.e.scrollLeft += event.deltaX;
+        section.s.e.scrollLeft += event.deltaX;
+        section.n.w.scrollTop += event.deltaY;
+        section.n.c.scrollTop += event.deltaY;
+        section.n.e.scrollTop += event.deltaY;
+    }, {capture:true});
+    section.n.e.addEventListener("scroll", function (event) {
+        if (section.n.e.flagged) {
+            section.n.e.flagged = false;
+            return;
+        }
+        section.c.e.flagged = true; section.c.e.scrollLeft = section.n.e.scrollLeft;
+        section.s.e.flagged = true; section.s.e.scrollLeft = section.n.e.scrollLeft;
+        section.n.w.flagged = true; section.n.w.scrollTop = section.n.e.scrollTop;
+        section.n.c.flagged = true; section.n.c.scrollTop = section.n.e.scrollTop;
+    }, {capture:true});
+
+
+    section.c.w.addEventListener("wheel", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        section.n.w.scrollLeft += event.deltaX;
+        section.c.w.scrollLeft += event.deltaX;
+        section.s.w.scrollLeft += event.deltaX;
+        section.c.w.scrollTop += event.deltaY;
+        section.c.c.scrollTop += event.deltaY;
+        section.c.e.scrollTop += event.deltaY;
+    }, {capture:true});
+    section.c.w.addEventListener("scroll", function (event) {
+        if (section.c.w.flagged) {
+            section.c.w.flagged = false;
+            return;
+        }
+        section.n.w.flagged = true; section.n.w.scrollLeft = section.c.w.scrollLeft;
+        section.s.w.flagged = true; section.s.w.scrollLeft = section.c.w.scrollLeft;
+        section.c.c.flagged = true; section.c.c.scrollTop = section.c.w.scrollTop;
+        section.c.e.flagged = true; section.c.e.scrollTop = section.c.w.scrollTop;
+    }, {capture:true});
+
+    let lastTime = Date.now(), af;
+
+    section.c.c.addEventListener("wheel", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        cancelAnimationFrame(af);
+        af = requestAnimationFrame(function () {
+            let time = Date.now();
+            document.getElementById("nw").firstChild.innerHTML = time - lastTime;
+            lastTime = time;
+            section.n.c.scrollLeft += event.deltaX;
+            section.c.c.scrollLeft += event.deltaX;
+            section.s.c.scrollLeft += event.deltaX;
+            section.c.w.scrollTop += event.deltaY;
+            section.c.c.scrollTop += event.deltaY;
+            section.c.e.scrollTop += event.deltaY;
+        });
+    }, {capture:true});
+    section.c.c.addEventListener("scroll", function (event) {
+        if (section.c.c.flagged) {
+            section.c.c.flagged = false;
+            return;
+        }
+        section.n.c.flagged = true; section.n.c.scrollLeft = section.c.c.scrollLeft;
+        section.s.c.flagged = true; section.s.c.scrollLeft = section.c.c.scrollLeft;
+        section.c.w.flagged = true; section.c.w.scrollTop = section.c.c.scrollTop;
+        section.c.e.flagged = true; section.c.e.scrollTop = section.c.c.scrollTop;
+    }, {capture:true});
+
+    section.c.e.addEventListener("wheel", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        section.n.e.scrollLeft += event.deltaX;
+        section.c.e.scrollLeft += event.deltaX;
+        section.s.e.scrollLeft += event.deltaX;
+        section.c.w.scrollTop += event.deltaY;
+        section.c.c.scrollTop += event.deltaY;
+        section.c.e.scrollTop += event.deltaY;
+    }, {capture:true});
+    section.c.e.addEventListener("scroll", function (event) {
+        if (section.c.e.flagged) {
+            section.c.e.flagged = false;
+            return;
+        }
+        section.n.e.flagged = true; section.n.e.scrollLeft = section.c.e.scrollLeft;
+        section.s.e.flagged = true; section.s.e.scrollLeft = section.c.e.scrollLeft;
+        section.c.w.flagged = true; section.c.w.scrollTop = section.c.e.scrollTop;
+        section.c.c.flagged = true; section.c.c.scrollTop = section.c.e.scrollTop;
+    }, {capture:true});
+
+
+    section.s.w.addEventListener("wheel", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        section.n.w.scrollLeft += event.deltaX;
+        section.c.w.scrollLeft += event.deltaX;
+        section.s.w.scrollLeft += event.deltaX;
+        section.n.w.scrollTop += event.deltaY;
+        section.n.c.scrollTop += event.deltaY;
+        section.n.e.scrollTop += event.deltaY;
+    }, {capture:true});
+    section.s.w.addEventListener("scroll", function (event) {
+        if (section.s.w.flagged) {
+            section.s.w.flagged = false;
+            return;
+        }
+        section.n.w.flagged = true; section.n.w.scrollLeft = section.s.w.scrollLeft;
+        section.c.w.flagged = true; section.c.w.scrollLeft = section.s.w.scrollLeft;
+        section.s.c.flagged = true; section.s.c.scrollTop = section.s.w.scrollTop;
+        section.s.e.flagged = true; section.s.e.scrollTop = section.s.w.scrollTop;
+    }, {capture:true});
+
+    section.s.c.addEventListener("wheel", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        section.n.c.scrollLeft += event.deltaX;
+        section.c.c.scrollLeft += event.deltaX;
+        section.s.c.scrollLeft += event.deltaX;
+        section.s.w.scrollTop += event.deltaY;
+        section.s.c.scrollTop += event.deltaY;
+        section.s.e.scrollTop += event.deltaY;
+    }, {capture:true});
+    section.s.c.addEventListener("scroll", function (event) {
+        if (section.s.c.flagged) {
+            section.s.c.flagged = false;
+            return;
+        }
+        section.n.c.flagged = true; section.n.c.scrollLeft = section.s.c.scrollLeft;
+        section.c.c.flagged = true; section.c.c.scrollLeft = section.s.c.scrollLeft;
+        section.s.w.flagged = true; section.s.w.scrollTop = section.s.c.scrollTop;
+        section.s.e.flagged = true; section.s.e.scrollTop = section.s.c.scrollTop;
+    }, {capture:true});
+
+    section.s.e.addEventListener("wheel", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        section.n.e.scrollLeft += event.deltaX;
+        section.c.e.scrollLeft += event.deltaX;
+        section.s.e.scrollLeft += event.deltaX;
+        section.s.w.scrollTop += event.deltaY;
+        section.s.c.scrollTop += event.deltaY;
+        section.s.e.scrollTop += event.deltaY;
+    }, {capture:true});
+    section.s.e.addEventListener("scroll", function (event) {
+        if (section.s.e.flagged) {
+            section.s.e.flagged = false;
+            return;
+        }
+        section.n.e.flagged = true; section.n.e.scrollLeft = section.s.e.scrollLeft;
+        section.c.e.flagged = true; section.c.e.scrollLeft = section.s.e.scrollLeft;
+        section.s.w.flagged = true; section.s.w.scrollTop = section.s.e.scrollTop;
+        section.s.c.flagged = true; section.s.c.scrollTop = section.s.e.scrollTop;
+    }, {capture:true});
+
+</script>
+</body>
+</html>

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Virtualized Grid</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <style type="text/css">
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            font-size: 13px;
+            font-family: sans-serif;
+            background-color: cornflowerblue;
+        }
+
+        .client-area .cell {
+            outline: 1px solid #ddd;
+            border-left: 1px solid #fff;
+            border-top: 1px solid #fff;
+            background: #f0f0f0;
+            text-align: center;
+        }
+
+        .horizontal-header {
+            width: calc(100vw - 96px);
+        }
+
+        .vertical-header {
+            height: calc(100vh - 96px);
+        }
+
+        .scroll-pane {
+            width: calc(100vw - 96px);
+            height: calc(100vh - 96px);
+        }
+
+        .header .cell {
+            outline: 1px solid #111;
+            border-top: 1px solid #555;
+            border-left: 1px solid #555;
+            background: #333;
+            color: lightgrey;
+            text-align: center;
+        }
+
+    </style>
+    <script type="module" src="./construct-style-sheets-polyfill.js"></script>
+</head>
+<body style="padding: 24px;">
+<div id="theGrid" class="grid" style="position: relative">
+    <div class="header" style="position: relative;">
+        <div class="cell"
+             style="position: absolute; z-index: 100; left: 1px; top: 1px; width: 62px; height: 22px; box-shadow: 1px 1px 3px 0px black;"></div>
+        <div class="horizontal-header"
+             style="position: absolute; z-index: 100; overflow: hidden; left: 64px; top: 0px; height: 24px; box-shadow: 1px 1px 3px 0px black;">
+            <div class="client-area" style="position: relative;"></div>
+        </div>
+        <div class="vertical-header"
+             style="position: absolute; z-index: 100; overflow: hidden; left: 0px; top: 24px; width: 64px; box-shadow: 1px 1px 3px 0px black;">
+            <div class="client-area" style="position: relative;"></div>
+        </div>
+    </div>
+    <div id="dbg" style="position: relative; left: 64px; top: 24px; overflow: auto;" class="scroll-pane">
+        <div class="client-area" style="position: relative"></div>
+    </div>
+</div>
+<script type="text/javascript">
+
+    var workerCode = function () {
+
+        var numItems = 1000000;
+
+        var ds = {
+            PAGE_SIZE: 50
+        };
+
+        ds.getItemAtIndex = function (index) {
+        }
+
+        ds.fetchPage = function (pageNumber) {
+            var page = [];
+            var pageOffset = pageNumber * ds.PAGE_SIZE;
+            for (var r = pageOffset; r < pageOffset + ds.PAGE_SIZE; r++) {
+                var row = new Array(1000);
+                for (var c = 0; c < 22; c++) {
+                    row[c] = 'r: ' + r + ', c: ' + c;
+                }
+                page.push(row);
+            }
+            postMessage(['onFetchPage', pageNumber, page]);
+        }
+
+        onmessage = function (event) {
+            ds[event.data[0]](event.data[1]);
+        }
+
+        postMessage(['onNumItems', numItems]);
+
+    }.toString();
+
+    var worker = new Worker(URL.createObjectURL(new Blob([workerCode.slice(workerCode.indexOf("{") + 1, workerCode.lastIndexOf("}"))], {
+        type: 'application/javascript'
+    })));
+
+    (function () {
+
+        function cellValue(c, r) {
+            return c + ':' + r;
+        }
+
+        const H_SCROLL_BUFFER_PX = 200;
+        const V_SCROLL_BUFFER_PX = 100;
+
+        function CreateGrid(gridElement, options) {
+
+            console.log('CreateGrid');
+
+            var headerElement = gridElement.firstElementChild;
+            var stubElement = headerElement.firstElementChild;
+            var topHeaderElement = headerElement.children[1].firstElementChild;
+            var leftHeaderElement = headerElement.children[2].firstElementChild;
+            var scrollAreaElement = headerElement.nextElementSibling;
+            var sheetElement = scrollAreaElement.firstElementChild;
+
+            var sheet = {
+                width: 0,
+                height: 0,
+            }
+
+            var columns = [];
+            for (var c = 0; c < 1000; c++) {
+                var width = 150; // Math.floor(150 + Math.random() * 25 * 3);
+                columns[c] = {
+                    name: c,
+                    width: width
+                }
+                sheet.width += width;
+            }
+
+            var rows = [];
+            for (var r = 0; r < 1000; r++) {
+                var height = 32; // Math.floor(25 + Math.random() * 25 * 3);
+                rows[r] = {
+                    name: r,
+                    height: height
+                }
+                sheet.height += height;
+            }
+
+            var pool = document.createDocumentFragment();
+            var topPool = document.createDocumentFragment();
+            var leftPool = document.createDocumentFragment();
+
+            var clientWidth = scrollAreaElement.clientWidth;
+            var clientHeight = scrollAreaElement.clientHeight;
+
+            function createTopHeaderCellCell(columnIndex) {
+                var cellElement = topPool.lastElementChild || stubElement.cloneNode(false);
+                cellElement.replaceChildren(columnIndex);
+                cellElement.style.width = (columns[columnIndex].width - 1) + "px";
+                return cellElement;
+            }
+
+            function positionHorizontally(cellElement, left) {
+                cellElement.style.left = left + "px";
+                return cellElement;
+            }
+
+            function createLeftHeaderCell(rowIndex) {
+                var cellElement = leftPool.lastElementChild || stubElement.cloneNode(false);
+                cellElement.replaceChildren(rowIndex);
+                cellElement.style.height = (rows[rowIndex].height - 1) + "px";
+                return cellElement;
+            }
+
+            function positionVertically(cellElement, top) {
+                cellElement.style.top = top + "px";
+                return cellElement;
+            }
+
+            topHeaderElement.style.width = sheetElement.style.width = sheet.width + 'px';
+            leftHeaderElement.style.height = sheetElement.style.height = sheet.height + 'px';
+
+            var topIndex = 0,
+                leftIndex = 0;
+            var renderedLeft = 0,
+                renderedTop = 0
+
+            var visibleRows = [];
+
+            function createCell(c, r) {
+                let pooled = pool.lastElementChild;
+                if (pooled) {
+                    pooled.id = cellValue(c, r);
+                    pooled.replaceChildren(cellValue(c, r));
+                    pooled.style.width = (columns[c].width - 1) + 'px';
+                    pooled.style.height = (rows[r].height - 1) + 'px';
+                    return pooled;
+                } else {
+                    var $cell = document.createElement('div');
+                    $cell.id = cellValue(c, r);
+                    $cell.replaceChildren(cellValue(c, r));
+                    $cell.classList.add("cell");
+                    $cell.style.position = 'absolute';
+                    $cell.style.width = (columns[c].width - 1) + 'px';
+                    $cell.style.height = (rows[r].height - 1) + 'px';
+                    return $cell;
+                }
+            }
+
+            function positionCell(cellElement, x, y) {
+                cellElement.style.left = x + 'px';
+                cellElement.style.top = y + 'px';
+                return cellElement;
+            }
+
+
+            for (var c = leftIndex, rasterX = 0; rasterX < clientWidth + H_SCROLL_BUFFER_PX; c++) {
+                var cell = positionHorizontally(createTopHeaderCellCell(c), rasterX);
+                topHeaderElement.appendChild(cell);
+                rasterX += columns[c].width;
+            }
+
+            for (var r = topIndex, rasterY = 0; rasterY < clientHeight + V_SCROLL_BUFFER_PX; r++) {
+                var cell = positionVertically(createLeftHeaderCell(r), rasterY);
+                leftHeaderElement.appendChild(cell);
+                rasterY += rows[r].height;
+            }
+
+            for (var r = topIndex, rasterY = 0; rasterY < clientHeight + V_SCROLL_BUFFER_PX; r++) {
+
+                var visibleRow = [];
+
+                for (var c = leftIndex, rasterX = 0; rasterX < clientWidth + H_SCROLL_BUFFER_PX; c++) {
+
+                    var $cell = positionCell(createCell(c, r), rasterX, rasterY);
+                    sheetElement.appendChild($cell);
+
+                    visibleRow.push($cell);
+
+                    rasterX += columns[c].width;
+                }
+
+                visibleRows.push(visibleRow);
+
+                rasterY += rows[r].height;
+            }
+
+            var rightIndex = c,
+                bottomIndex = r;
+            var renderedRight = rasterX,
+                renderedBottom = rasterY;
+
+            var scrollLeft = sheetElement.scrollLeft;
+            var scrollTop = sheetElement.scrollTop;
+
+            var gridElementClassList = gridElement.classList;
+
+            var refreshing;
+
+            function refresh() {
+
+                var viewportWidth = scrollAreaElement.clientWidth;
+                var viewportHeight = scrollAreaElement.clientHeight;
+
+                var offsetX = scrollAreaElement.scrollLeft - scrollLeft;
+                scrollLeft = scrollAreaElement.scrollLeft;
+
+                if (offsetX) {
+                    topHeaderElement.parentNode.scrollLeft = scrollAreaElement.scrollLeft;
+                }
+
+                var offsetY = scrollAreaElement.scrollTop - scrollTop;
+                scrollTop = scrollAreaElement.scrollTop;
+
+                if (offsetY) {
+                    leftHeaderElement.parentNode.scrollTop = scrollAreaElement.scrollTop;
+                }
+
+                var visibleLeft = scrollLeft - H_SCROLL_BUFFER_PX,
+                    visibleRight = scrollLeft + viewportWidth + H_SCROLL_BUFFER_PX;
+                var visibleTop = scrollTop - V_SCROLL_BUFFER_PX,
+                    visibleBottom = scrollTop + viewportHeight + V_SCROLL_BUFFER_PX;
+
+                // =========================================================================================================
+                // LEAVE
+                // =========================================================================================================
+
+                while (leftHeaderElement.childElementCount > 0 && topIndex < rows.length && (renderedTop + rows[topIndex].height < visibleTop)) {
+
+                    leftPool.appendChild(leftHeaderElement.firstChild);
+
+                    var shifted = visibleRows.shift();
+                    pool.append(...shifted);
+
+                    renderedTop += rows[topIndex++].height;
+                }
+                while (leftHeaderElement.childElementCount > 0 && bottomIndex > 0 && (renderedBottom - rows[bottomIndex - 1].height > visibleBottom)) {
+
+                    renderedBottom -= rows[--bottomIndex].height;
+
+                    leftPool.appendChild(leftHeaderElement.lastChild);
+
+                    var popped = visibleRows.pop();
+                    pool.append(...popped);
+                }
+
+                while (topHeaderElement.childElementCount > 0 && leftIndex < columns.length && (renderedLeft + columns[leftIndex].width < visibleLeft)) {
+
+                    topPool.appendChild(topHeaderElement.firstChild);
+
+                    visibleRows.forEach(function (visibleRow) {
+                        var shifted = visibleRow.shift();
+                        if (shifted) pool.append(shifted);
+                    });
+
+                    renderedLeft += columns[leftIndex++].width;
+                }
+                while (topHeaderElement.childElementCount > 0 && rightIndex > 0 && (renderedRight - columns[rightIndex - 1].width > visibleRight)) {
+
+                    renderedRight -= columns[--rightIndex].width;
+
+                    topPool.appendChild(topHeaderElement.lastChild);
+
+                    visibleRows.forEach(function (visibleRow) {
+                        var popped = visibleRow.pop();
+                        if (popped) pool.append(popped);
+                    });
+                }
+
+                // =========================================================================================================
+                // ENTER
+                // =========================================================================================================
+
+                var enterRightIndex = rightIndex;
+                var enterRight = renderedRight;
+                while (enterRightIndex < columns.length && (enterRight + columns[enterRightIndex].width < visibleRight)) {
+                    topHeaderElement.appendChild(positionHorizontally(createTopHeaderCellCell(enterRightIndex), enterRight));
+                    enterRight += columns[enterRightIndex++].width;
+                }
+                var enterLeftIndex = leftIndex;
+                var enterLeft = renderedLeft;
+                while (enterLeftIndex > 0 && (enterLeft - columns[enterLeftIndex - 1].width > visibleLeft)) {
+                    enterLeft -= columns[--enterLeftIndex].width;
+                    topHeaderElement.insertBefore(positionHorizontally(createTopHeaderCellCell(enterLeftIndex), enterLeft), topHeaderElement.firstChild);
+                }
+                var enterBottomIndex = bottomIndex;
+                var enterBottom = renderedBottom;
+                while (enterBottomIndex < rows.length && (enterBottom + rows[enterBottomIndex].height < visibleBottom)) {
+                    leftHeaderElement.appendChild(positionVertically(createLeftHeaderCell(enterBottomIndex), enterBottom));
+                    enterBottom += rows[enterBottomIndex++].height;
+                }
+                var enterTopIndex = topIndex;
+                var enterTop = renderedTop;
+                while (enterTopIndex > 0 && (enterTop - rows[enterTopIndex - 1].height > visibleTop)) {
+                    enterTop -= rows[--enterTopIndex].height;
+                    leftHeaderElement.insertBefore(positionVertically(createLeftHeaderCell(enterTopIndex), enterTop), leftHeaderElement.firstChild);
+                }
+
+                while (rightIndex < enterRightIndex) {
+
+                    var rasterY = enterTop;
+
+                    for (var r = enterTopIndex; r < enterBottomIndex; r++) {
+                        var cell = positionCell(createCell(rightIndex, r), renderedRight, rasterY);
+                        rasterY += rows[r].height;
+                        sheetElement.appendChild(cell);
+                        visibleRows[r - enterTopIndex].push(cell);
+                    }
+
+                    renderedRight += columns[rightIndex++].width;
+                }
+                while (leftIndex > enterLeftIndex) {
+
+                    renderedLeft -= columns[--leftIndex].width;
+
+                    var rasterY = enterTop;
+
+                    for (var r = enterTopIndex; r < enterBottomIndex; r++) {
+                        var cell = positionCell(createCell(leftIndex, r), renderedLeft, rasterY);
+                        rasterY += rows[r].height;
+                        sheetElement.appendChild(cell);
+                        visibleRows[r - enterTopIndex].unshift(cell);
+                    }
+                }
+
+                while (bottomIndex < enterBottomIndex) {
+
+                    var rasterX = enterLeft;
+
+                    var visibleRow = new Array(enterRightIndex - enterLeftIndex);
+                    for (var c = enterLeftIndex; c < enterRightIndex; c++) {
+                        var cell = positionCell(createCell(c, bottomIndex), rasterX, renderedBottom);
+                        rasterX += columns[c].width;
+                        sheetElement.appendChild(cell);
+                        visibleRow[c - enterLeftIndex] = cell;
+                    }
+                    visibleRows.push(visibleRow);
+
+                    renderedBottom += rows[bottomIndex++].height;
+                }
+                while (topIndex > enterTopIndex) {
+
+                    renderedTop -= rows[--topIndex].height;
+
+                    var rasterX = enterLeft;
+
+                    var visibleRow = new Array(enterRightIndex - enterLeftIndex);
+                    for (var c = enterLeftIndex; c < enterRightIndex; c++) {
+                        var cell = positionCell(createCell(c, topIndex), rasterX, renderedTop);
+                        rasterX += columns[c].width;
+                        sheetElement.appendChild(cell);
+                        visibleRow[c - enterLeftIndex] = cell;
+                    }
+                    visibleRows.unshift(visibleRow);
+                }
+
+                var debugModel = [];
+
+                for (var r = 0; r < leftHeaderElement.childElementCount; r++) {
+                    var row = [];
+                    for (var c = 0; c < topHeaderElement.childElementCount; c++) {
+                        row.push(((visibleRows[r] || ['n/a R'])[c]) || 'n/a C');
+                    }
+                    debugModel.push(row);
+                }
+            }
+
+            let af;
+
+            scrollAreaElement.onscroll = function () {
+                cancelAnimationFrame(af);
+                af = requestAnimationFrame(refresh);
+            }
+
+            // (function () {
+            //
+            //     var pending;
+            //
+            //     return options.debounce ? function (event) {
+            //         clearTimeout(pending);
+            //         pending = setTimeout(function () {
+            //             refresh(event);
+            //         }, options.debounce);
+            //     } : options.requestAnimationFrame ? function (event) {
+            //         cancelAnimationFrame(pending);
+            //         pending = requestAnimationFrame(function () {
+            //             refresh(event);
+            //         });
+            //     } : refresh;
+            //
+            // })();
+
+
+            // addResizeListener(gridElement, (function () {
+            //     var pending;
+            //     return function () {
+            //         clearTimeout(pending);
+            //         pending = setTimeout(refresh, 250);
+            //     }
+            // })());
+        }
+
+        CreateGrid(document.getElementById('theGrid'));
+
+    })();
+
+    (function () {
+        var attachEvent = document.attachEvent;
+        var isIE = navigator.userAgent.match(/Trident/);
+        console.log(isIE);
+        var requestFrame = (function () {
+            var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
+                function (fn) {
+                    return window.setTimeout(fn, 20);
+                };
+            return function (fn) {
+                return raf(fn);
+            };
+        })();
+
+        var cancelFrame = (function () {
+            var cancel = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame ||
+                window.clearTimeout;
+            return function (id) {
+                return cancel(id);
+            };
+        })();
+
+        function resizeListener(e) {
+            var win = e.target || e.srcElement;
+            if (win.__resizeRAF__) cancelFrame(win.__resizeRAF__);
+            win.__resizeRAF__ = requestFrame(function () {
+                var trigger = win.__resizeTrigger__;
+                trigger.__resizeListeners__.forEach(function (fn) {
+                    fn.call(trigger, e);
+                });
+            });
+        }
+
+        function objectLoad(e) {
+            this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__;
+            this.contentDocument.defaultView.addEventListener('resize', resizeListener);
+        }
+
+        window.addResizeListener = function (element, fn) {
+            if (!element.__resizeListeners__) {
+                element.__resizeListeners__ = [];
+                if (attachEvent) {
+                    element.__resizeTrigger__ = element;
+                    element.attachEvent('onresize', resizeListener);
+                } else {
+                    if (getComputedStyle(element).position == 'static') element.style.position = 'relative';
+                    var obj = element.__resizeTrigger__ = document.createElement('object');
+                    obj.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
+                    obj.__resizeElement__ = element;
+                    obj.onload = objectLoad;
+                    obj.type = 'text/html';
+                    if (isIE) element.appendChild(obj);
+                    obj.data = 'about:blank';
+                    if (!isIE) element.appendChild(obj);
+                }
+            }
+            element.__resizeListeners__.push(fn);
+        };
+
+        window.removeResizeListener = function (element, fn) {
+            element.__resizeListeners__.splice(element.__resizeListeners__.indexOf(fn), 1);
+            if (!element.__resizeListeners__.length) {
+                if (attachEvent) element.detachEvent('onresize', resizeListener);
+                else {
+                    element.__resizeTrigger__.contentDocument.defaultView.removeEventListener('resize', resizeListener);
+                    element.__resizeTrigger__ = !element.removeChild(element.__resizeTrigger__);
+                }
+            }
+        }
+    })();
+
+    const grid = document.getElementById("dbg");
+
+    window.demo = () => {
+        let top = 1;
+        requestAnimationFrame(function redraw(timestamp) {
+            console.log("demo", timestamp);
+            grid.scrollTo(0, top = top * 1.125);
+            if (top <= 31000) requestAnimationFrame(redraw);
+        });
+    };
+
+    demo();
+
+</script>
+</body>
+</html>

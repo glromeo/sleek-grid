@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Sleek Grid 😎 Jasmine Specs</title>
+    <link rel="shortcut icon" type="image/png" href="favicon.png">
+    <script type="text/javascript" src="./support/construct-style-sheets-polyfill.js"></script>
+    <script type="text/javascript" src="../node_modules/jasmine-core/lib/jasmine-core/jasmine.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            box-sizing: border-box;
+            margin: 0;
+            height: 100vh;
+            font-size: 13px;
+            font-family: sans-serif;
+        }
+        #root {
+            flex: 1 1 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            overflow-y: auto;
+        }
+        #root > .fixture {
+            flex: 1 1 auto;
+        }
+        .fixture {
+            overflow: scroll;
+            min-width: 640px;
+            min-height: 480px;
+        }
+        .fixture > .scroll-area {
+            position: relative;
+            width: 16777216px;
+            height: 16777216px;
+            background-color: cornflowerblue;
+            padding: 32px;
+        }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="lib/runner.mjs"></script>
+</body>
+</html>

@@ -1,0 +1,150 @@
+<html lang="en">
+<head>
+    <title>Benchmarks</title>
+</head>
+<body>
+<div id="first"></div>
+<div id="second"></div>
+<script src="./lodash.js"></script>
+<script src="./benchmark.js"></script>
+<script type="text/javascript">
+    // const array = [];
+    // const head = {index: 0, tail: null};
+    // for (let i = 0, t = head; i < 50; i++) {
+    //     array[i] = i;
+    //     t = t.tail = {
+    //         index: i,
+    //         tail: null
+    //     }
+    // }
+    // const object = [];
+    // for (let i = 0; i < 100; i++) {
+    //     object[i] = {
+    //         top: i,
+    //         right: i,
+    //         bottom: i,
+    //         left: i
+    //     }
+    // }
+    // function fo({top, right, bottom, left}) {
+    //     return {
+    //         top: top++,
+    //         right: right++,
+    //         bottom: bottom++,
+    //         left: left++
+    //     };
+    // }
+    //
+    // const array = [];
+    // for (let i = 0; i < 100; i++) {
+    //     array[i] = [i,i,i,i];
+    // }
+    // function fa([top, right, bottom, left]) {
+    //     return [top++, right++, bottom++, left++];
+    // }
+    // let container = document.body.appendChild(document.createElement("div"));
+
+    document.getElementById("first").className="a b c d e f";
+    let f = 0;
+    document.getElementById("second").className="a b c d e f";
+    let s = 0;
+
+    new Benchmark.Suite()
+        // .add("Linked list", function () {
+        //     let t = head.tail;
+        //     while (t) {
+        //         t.index++;
+        //         t = t.next;
+        //     }
+        // })
+        // .add("Array", function () {
+        //     for (let i = 0; i <array.length; i++) {
+        //         array[i]++;
+        //     }
+        // })
+        // .add("Array", function () {
+        //     for (let i = 0; i <array.length; i++) {
+        //         array[i] = fa(array[i]);
+        //     }
+        // })
+        // .add("Object", function () {
+        //     for (let i = 0; i <object.length; i++) {
+        //         object[i] = fo(object[i]);
+        //     }
+        // })
+        // .add("for i", function () {
+        //     for (let i = 0; i <array.length; i++) {
+        //         array[i][0]++;
+        //     }
+        // })
+        // .add("for of", function () {
+        //     for (const a of array) {
+        //         a[0]++;
+        //     }
+        // })
+        // .add("while", function () {
+        //     let i = array.length;
+        //     while (--i>=0) {
+        //         array[i][0]++;
+        //     }
+        // })
+        // .add("for direct", function () {
+        //     for (let i = 0; i < 10; i++) {
+        //         container.appendChild(document.createElement("div"));
+        //     }
+        //     for (let i = 0; i < 10; i++) {
+        //         container.removeChild(container.lastChild);
+        //     }
+        // })
+        // .add("for indirect", function () { // WINS!!!
+        //     for (let i = 0; i < 10; i++) {
+        //         container.append(document.createElement("div"));
+        //     }
+        //     for (let i = 0; i < 10; i++) {
+        //         container.lastChild.remove();
+        //     }
+        // })
+        .add("first", function () {
+            // document.getElementById("first").className=`a b c d e f-${++f}`;
+
+            // let el = document.getElementById("first");
+            // el.style.left = `${++f}px`
+            // el.style.width = `${f}px`;
+
+            let el = document.getElementById("first");
+            // el.innerHTML = null;
+            // let child = document.createElement("div");
+            // child.id = `id-${++f}`;
+            // child.className=`a b c-${f}`
+            // child.innerText = `${f}`;
+            // el.appendChild(child);
+
+            el.setAttribute("alpha", "1");
+            el.setAttribute("beta", el.getAttribute("alpha"));
+        })
+        .add("second", function () {
+            // document.getElementById("second").classList.replace(`f-${s}`, `f-${++s}`);
+
+            // let el = document.getElementById("second");
+            // el.style.cssText = `left:${++s}px;width:${s}px`;
+
+            let el = document.getElementById("second");
+            // el.innerHTML = null;  // 96,620 if optimized still << 172,641 -> dom js wins!!!
+            // el.insertAdjacentHTML("afterbegin", `<div id="${++s}" class="a b c-${s}">${s}</div>`);
+
+            el.alpha = "1";
+            el.beta = el.alpha;
+        })
+        .on("start", function (event) {
+            console.log("Benchmark started...");
+        })
+        .on("cycle", function (event) {
+            console.log(String(event.target));
+        })
+        .on("complete", function () {
+            console.log("Fastest is " + this.filter("fastest").map("name"));
+        })
+        .run({"async": true});
+</script>
+</body>
+</html>
