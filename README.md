@@ -4,17 +4,12 @@
 
 ### Pure Javascript
 ### Zero dependencies
-### Virtualized
+### Virtualized (60fps)
 ### Variable column width and row height
-### Columns and rows resizing and autosizing
+### Resizing and auto-sizing
 ### Drag and drop
 ### Filtering
 ### Sorting
-
-----
-### Known bugs and missing features
-
-#### 🐛 Keyboard navigation
-
-#### Pinning
-#### Selection
+### Sticky columns & sticky rows
+### Selection 
+### Keyboard navigation
