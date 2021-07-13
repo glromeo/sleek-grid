@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
-    <title>Virtualized Grid</title>
+    <title>AgGrid Comparison</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <style type="text/css">
         body {
@@ -14,17 +14,25 @@
             font-family: sans-serif;
             background-color: cornflowerblue;
         }
+
+        #ag-grid {
+            height: 100%;
+        }
+
+        .ag-theme-alpine .ag-cell, .ag-theme-alpine .ag-full-width-row .ag-cell-wrapper.ag-row-group {
+            line-height: 30px !important;
+        }
     </style>
-    <script type="module" src="./construct-style-sheets-polyfill.js"></script>
+    <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-grid.css">
+    <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-alpine.css">
 </head>
 <body style="padding: 24px;">
-<sleek-grid></sleek-grid>
-<script type="module" src="../dist/sleek-grid.js"></script>
+<div id="ag-grid" class="ag-theme-alpine"></div>
+<script type="module" src="../lib/index.mjs"></script>
 <script type="module">
 
-    window.grid = document.querySelector("sleek-grid");
-
-    fetch("./mock-data.json").then(async function (result) {
+    fetch("../public/mock-data.json").then(async function (result) {
 
         const data = await result.json();
 
@@ -32,41 +40,51 @@
         // number -> index in array row
 
         const columns = [
-            {label:"Id", field: "id", width: 150},
-            {label:"First_name", field: "first_name", width: 150},
-            {label:"Last_name", field: "last_name", width: 150},
-            {label:"Email", field: "email", width: 150},
-            {label:"Gender", field: "gender", width: 150},
-            {label:"Ip_address", field: "ip_address", width: 150},
-            {label:"Buzzword", field: "buzzword", width: 150},
-            {label:"Pet", field: "pet", width: 150},
-            {label:"City", field: "city", width: 150},
-            {label:"Car_make", field: "car_make", width: 150},
-            {label:"Car_vin", field: "car_vin", width: 150},
-            {label:"Color", field: "color", width: 150},
-            {label:"Product", field: "product", width: 150},
-            {label:"Company", field: "company", width: 150},
-            {label:"Wealth", field: "wealth", width: 150},
-            {label:"Race", field: "race", width: 150},
-            {label:"Plant", field: "plant", width: 150},
-            {label:"Postcode", field: "postcode", width: 150},
-            {label:"Phone_number", field: "phone_number", width: 150},
-            {label:"Address", field: "address", width: 150},
-            {label:"Iban", field: "iban", width: 150},
+            {headerName: "Id", field: "id"},
+            {headerName: "First_name", field: "first_name"},
+            {headerName: "Last_name", field: "last_name"},
+            {headerName: "Email", field: "email"},
+            {headerName: "Gender", field: "gender"},
+            {headerName: "Ip_address", field: "ip_address"},
+            {headerName: "Buzzword", field: "buzzword"},
+            {headerName: "Pet", field: "pet"},
+            {headerName: "City", field: "city"},
+            {headerName: "Car_make", field: "car_make"},
+            {headerName: "Car_vin", field: "car_vin"},
+            {headerName: "Color", field: "color"},
+            {headerName: "Product", field: "product"},
+            {headerName: "Company", field: "company"},
+            {headerName: "Wealth", field: "wealth"},
+            {headerName: "Race", field: "race"},
+            {headerName: "Plant", field: "plant"},
+            {headerName: "Postcode", field: "postcode"},
+            {headerName: "Phone_number", field: "phone_number"},
+            {headerName: "Address", field: "address"},
+            {headerName: "Iban", field: "iban"}
         ];
 
-        data.forEach((row, index) => {
-            row.label = index;
-            row.height = 32;
-        });
-
-        grid.rowHeight = index => 32;
-
-        grid.renderCell = function (column, row) {
-            return `<span class="text">${row[column.field]}</span>`
+        let rows = data;
+        for (let i = 0; i < 0; i++) {
+            rows = [...rows.map(r => ({...r})), ...rows.map(r => ({...r}))];
         }
 
-        grid.data = {columns: columns.slice(0, columns.length), rows: data};
+        const gridDiv = document.querySelector("#ag-grid");
+        let gridOptions = {
+            columnDefs: columns.slice(0, columns.length),
+            rowData: rows,
+            rowHeight: 32
+        };
+
+        new agGrid.Grid(gridDiv, gridOptions);
+
+        await new Promise(function (resolve) {
+            setTimeout(resolve, 250);
+        });
+
+        const grid = window.grid = document.querySelector(".ag-center-cols-viewport");
+
+        const api = gridOptions.api;
+
 
         let searchParams = new URLSearchParams(window.location.search.slice(1));
         if (searchParams.has("demo")) {
@@ -76,8 +94,8 @@
                     console.time("raf");
                     requestAnimationFrame(function redraw() {
                         ++count;
-                        grid.scrollTo(0, (top += 500) % 31000);
-                        if (top <= 62000) {
+                        api.ensureIndexVisible((top += 50) % 1000)
+                        if (top <= 3000) {
                             requestAnimationFrame(redraw);
                         } else {
                             console.timeEnd("raf");
@@ -90,7 +108,7 @@
                     requestAnimationFrame(() => {
                         let top = 500, count = 0;
                         console.time("int");
-                        let interval = setInterval(function() {
+                        let interval = setInterval(function () {
                             ++count;
                             grid.scrollTo(0, (top += 500) % 31000);
                             if (top > 62000) {
@@ -105,7 +123,7 @@
                     requestAnimationFrame(() => {
                         let top = 1500, count = 0;
                         console.time("int");
-                        let interval = setInterval(function() {
+                        let interval = setInterval(function () {
                             ++count;
                             grid.scrollTo(0, (top += 1500) % 31000);
                             if (top > 62000) {
@@ -135,7 +153,7 @@
                     requestAnimationFrame(() => {
                         let top = 10, count = 0;
                         console.time("small");
-                        let interval = setInterval(function() {
+                        let interval = setInterval(function () {
                             ++count;
                             grid.scrollTo(0, top += 10);
                             if (top > 2000) {

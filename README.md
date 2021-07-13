@@ -2,7 +2,7 @@
     <img src="logo.svg">
 </p>
 
-### Pure Javascript
+### Pure Javascript (56kB)
 ### Zero dependencies
 ### Virtualized (60fps)
 ### Variable column width and row height
@@ -13,3 +13,4 @@
 ### Sticky columns & sticky rows
 ### Selection 
 ### Keyboard navigation
+

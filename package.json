@@ -1,7 +1,7 @@
 {
   "name": "@sleek/grid",
   "version": "1.0.0",
-  "main": "dist/sleek-grid.js",
+  "main": "iife/sleek-grid.js",
   "license": "MIT",
   "description": "A modern virtualized grid written in pure javscript lean and sleek",
   "devDependencies": {
@@ -11,7 +11,7 @@
   },
   "scripts": {
     "build:test": "esbuild spec/lib/fixtures.js spec/lib/runner.js --watch --sourcemap --format=esm --bundle --minify --sourcemap --out-extension:.js=.mjs --outdir=spec/lib",
-    "build": "esbuild lib/index.mjs --format=iife --bundle --minify --sourcemap --outfile=dist/sleek-grid.js",
-    "build:watch": "esbuild lib/index.mjs --format=iife --bundle --minify --sourcemap --watch --outfile=dist/sleek-grid.js"
+    "build": "esbuild lib/index.mjs --format=iife --bundle --minify --sourcemap --outfile=iife/sleek-grid.js",
+    "build:watch": "esbuild lib/index.mjs --format=iife --bundle --minify --sourcemap --watch --outfile=iife/sleek-grid.js"
   }
 }
