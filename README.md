@@ -1,8 +1,8 @@
 <p align="center">
     <img src="logo.svg">
+    <br><br>
+    <a href="https://glromeo.github.io/sleek-grid/demo.html">>>> DEMO <<<</a>
 </p>
-
-### [DEMO](https://glromeo.github.io/sleek-grid/demo.html) hosted on GitHub pages
 
 ## Features
 
