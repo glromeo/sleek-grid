@@ -15,7 +15,7 @@
             background-color: cornflowerblue;
         }
     </style>
-    <script src="./dist/construct-style-sheets-polyfill.js"></script>
+    <script src="./demo/construct-style-sheets-polyfill.js"></script>
 </head>
 <body style="padding: 25px 25px;">
 <sleek-grid column-autosize="quick"
@@ -31,12 +31,12 @@
             sticky-right="2"
 >
 </sleek-grid>
-<script type="module" src="./dist/sleek-grid.js"></script>
+<script type="module" src="./demo/sleek-grid.js"></script>
 <script type="module">
 
     window.grid = document.querySelector("sleek-grid");
 
-    fetch("./dist/mock-data.json").then(async function (result) {
+    fetch("./demo/mock-data.json").then(async function (result) {
 
         const rows = await result.json();
 
