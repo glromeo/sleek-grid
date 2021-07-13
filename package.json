@@ -1,5 +1,6 @@
 {
-  "name": "@sleek/grid",
+  "name": "sleek-grid",
+  "private": false,
   "version": "1.0.0",
   "main": "iife/sleek-grid.js",
   "license": "MIT",
@@ -13,5 +14,18 @@
     "build:test": "esbuild spec/lib/fixtures.js spec/lib/runner.js --watch --sourcemap --format=esm --bundle --minify --sourcemap --out-extension:.js=.mjs --outdir=spec/lib",
     "build": "esbuild lib/index.mjs --format=iife --bundle --minify --sourcemap --outfile=iife/sleek-grid.js",
     "build:watch": "esbuild lib/index.mjs --format=iife --bundle --minify --sourcemap --watch --outfile=iife/sleek-grid.js"
-  }
+  },
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/glromeo/sleek-grid.git"
+  },
+  "author": "glromeo@gmail.com",
+  "bugs": {
+    "url": "https://github.com/glromeo/sleek-grid/issues"
+  },
+  "homepage": "https://github.com/glromeo/sleek-grid#readme"
 }
